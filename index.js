@@ -36,16 +36,22 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     return res.status(400).send("File PDF tidak dapat diproses.");
   }
 
-  // ✅ Potong teks agar tidak overload AI
-  const truncatedText = textContent.slice(0, 500);
+  // ✅ Potong teks berdasarkan 2 paragraf pertama
+  const paragraphs = textContent
+    .split(/\n\s*\n/) // bagi berdasarkan jeda paragraf
+    .map(p => p.trim())
+    .filter(p => p.length > 30);
+
+  const truncatedText = paragraphs.slice(0, 1).join("\n\n");
+
   console.log("📤 Mengirim teks ke AI...");
   console.log(truncatedText.slice(0, 100));
 
   try {
     const aiResponse = await axios.post(
-      "http://localhost:5000/predict",
+      "http://127.0.0.1:5000/predict",
       { text: truncatedText },
-      { timeout: 30000}
+      { timeout: 90000 } // Timeout ditingkatkan jadi 90 detik
     );
 
     let { label, score } = aiResponse.data;
